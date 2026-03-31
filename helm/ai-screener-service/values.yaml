@@ -3,7 +3,7 @@ replicaCount: 1
 image:
   repository: resumescreener-ai-screener-service
   pullPolicy: IfNotPresent
-  tag: "latest"
+  tag: "sha-aac880d"
 
 service:
   type: ClusterIP
