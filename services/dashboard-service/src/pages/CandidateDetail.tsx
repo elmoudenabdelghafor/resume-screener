@@ -19,7 +19,7 @@ export default function CandidateDetail() {
   useEffect(() => {
     if (candidate) return
     if (!jobId || !resumeId) return
-    setLoading(true)
+    
     getResults(jobId)
       .then(results => {
         const found = results.find(r => r.resume_id === resumeId)
