@@ -289,3 +289,5 @@ def get_results(job_id: str):
         }
         for r in rows
     ]
+#   t r i g g e r   c i  
+ 
