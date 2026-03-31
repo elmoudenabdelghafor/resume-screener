@@ -3,7 +3,7 @@ replicaCount: 1
 image:
   repository: resumescreener-parser-service
   pullPolicy: IfNotPresent
-  tag: "sha-abeec97"
+  tag: "sha-aac880d"
 
 service:
   type: ClusterIP
