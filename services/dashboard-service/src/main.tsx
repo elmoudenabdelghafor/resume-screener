@@ -9,3 +9,5 @@ createRoot(document.getElementById('root')!).render(
   </StrictMode>,
 )
 // trigger ci
+
+// test push race condition loop
