@@ -1,0 +1,15 @@
+#cloud-config
+runcmd:
+  # Open firewall ports in Ubuntu's default iptables so our Security List settings actually work
+  - iptables -I INPUT 6 -m state --state NEW -p tcp --dport 80 -j ACCEPT
+  - iptables -I INPUT 6 -m state --state NEW -p tcp --dport 443 -j ACCEPT
+  - iptables -I INPUT 6 -m state --state NEW -p tcp --dport 6443 -j ACCEPT
+  - netfilter-persistent save
+
+  # Install K3s (lightweight Kubernetes)
+  - curl -sfL https://get.k3s.io | sh -
+
+  # Copy the kubeconfig file to the ubuntu user's directory so you can manage the cluster
+  - mkdir -p /home/ubuntu/.kube
+  - cp /etc/rancher/k3s/k3s.yaml /home/ubuntu/.kube/config
+  - chown -R ubuntu:ubuntu /home/ubuntu/.kube

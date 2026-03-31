@@ -1,0 +1,83 @@
+name: CI/CD Pipeline - upload-service
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'services/upload-service/**'
+  pull_request:
+    paths:
+      - 'services/upload-service/**'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: elmoudenabdelghafor/resumescreener-upload-service
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools
+          if [ -f "services/upload-service/requirements.txt" ]; then pip install -r services/upload-service/requirements.txt; fi
+          pip install flake8 pytest
+
+      - name: Lint with flake8
+        working-directory: services/upload-service
+        run: |
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+      - name: Test with pytest
+        working-directory: services/upload-service
+        run: |
+          PYTHONPATH=. pytest tests/
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,format=short
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./services/upload-service
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Update Helm Chart values.yaml
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          TAG_NAME="sha-${GITHUB_SHA::7}"
+          sed -i 's/tag: .*/tag: "'$TAG_NAME'"/g' helm/upload-service/values.yaml
+
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git commit -am "chore: deploy upload-service to $TAG_NAME [skip ci]" || echo "No changes to commit"
+          git push origin main

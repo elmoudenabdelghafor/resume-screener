@@ -1,0 +1,32 @@
+replicaCount: 1
+
+image:
+  repository: resumescreener-parser-service
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+service:
+  type: ClusterIP
+  port: 8002
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+env:
+  REDIS_HOST: redis-master
+  REDIS_PORT: 6379
+  MINIO_ENDPOINT: minio:9000
+  MINIO_SECURE: false
+  POSTGRES_HOST: postgres
+  POSTGRES_PORT: 5432
+  POSTGRES_DB: resume_screener
+  POSTGRES_USER: screener
+  POSTGRES_PASSWORD: changeme
+  MINIO_ACCESS_KEY: minioadmin
+  MINIO_SECRET_KEY: minioadmin
+  MINIO_BUCKET: resumes
