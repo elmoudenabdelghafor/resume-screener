@@ -72,4 +72,5 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git commit -am "chore: deploy dashboard-service to $TAG_NAME [skip ci]" || echo "No changes to commit"
+          git pull --rebase origin main
           git push origin main
