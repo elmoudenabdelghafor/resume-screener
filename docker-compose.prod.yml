@@ -1,0 +1,57 @@
+# ── Production Docker Compose ──────────────────────────────────────────────────
+# Uses AWS RDS (Postgres) and AWS S3 instead of local containers.
+# Only Redis runs locally (not available in AWS free tier).
+
+services:
+  # ── Message Queue (local - no AWS free tier equivalent) ──────────────────
+  redis:
+    image: redis:7-alpine
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Upload Service ───────────────────────────────────────────────────────
+  upload-service:
+    image: ghcr.io/elmoudenabdelghafor/resumescreener-upload-service:latest
+    restart: always
+    ports:
+      - "8001:8001"
+    env_file: .env
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  # ── Parser Service ───────────────────────────────────────────────────────
+  parser-service:
+    image: ghcr.io/elmoudenabdelghafor/resumescreener-parser-service:latest
+    restart: always
+    ports:
+      - "8002:8002"
+    env_file: .env
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  # ── AI Screener Service ──────────────────────────────────────────────────
+  ai-screener-service:
+    image: ghcr.io/elmoudenabdelghafor/resumescreener-ai-screener-service:latest
+    restart: always
+    ports:
+      - "8003:8003"
+    env_file: .env
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  # ── Dashboard (React SPA served by Nginx) ────────────────────────────────
+  dashboard-service:
+    image: ghcr.io/elmoudenabdelghafor/resumescreener-dashboard-service:latest
+    restart: always
+    ports:
+      - "3000:80"
+    depends_on:
+      - upload-service
+      - ai-screener-service

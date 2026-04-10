@@ -24,16 +24,20 @@ def _env(key: str, default: str = "") -> str:
 def get_s3_client():
     import boto3
     from botocore.client import Config
-    endpoint = _env("MINIO_ENDPOINT", "minio:9000")
-    secure = _env("MINIO_SECURE", "false").lower() == "true"
-    return boto3.client(
-        "s3",
-        endpoint_url=f"{'https' if secure else 'http'}://{endpoint}",
-        aws_access_key_id=_env("MINIO_ACCESS_KEY", "minioadmin"),
-        aws_secret_access_key=_env("MINIO_SECRET_KEY", "minioadmin"),
-        config=Config(signature_version="s3v4"),
-        region_name="us-east-1",
-    )
+    endpoint = _env("MINIO_ENDPOINT", "")
+    if endpoint:
+        # Local dev: connect to MinIO
+        secure = _env("MINIO_SECURE", "false").lower() == "true"
+        return boto3.client(
+            "s3",
+            endpoint_url=f"{'https' if secure else 'http'}://{endpoint}",
+            aws_access_key_id=_env("MINIO_ACCESS_KEY", "minioadmin"),
+            aws_secret_access_key=_env("MINIO_SECRET_KEY", "minioadmin"),
+            config=Config(signature_version="s3v4"),
+            region_name="us-east-1",
+        )
+    # Production: use EC2 IAM role credentials automatically
+    return boto3.client("s3", region_name=_env("AWS_REGION", "us-east-1"))
 
 
 def get_db_conn():
@@ -190,6 +194,6 @@ def parse_resume(
             "raw_text": raw_text,
             "job_description": job_description,
         },
-        job_id=job_id,          # RQ job id = app job id for traceability
+        job_id=f"screen:{job_id}:{resume_id}",
     )
     logger.info("[%s] Enqueued screen job for resume_id=%s", job_id, resume_id)

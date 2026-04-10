@@ -70,14 +70,19 @@ ALLOWED_CONTENT_TYPES = {
 # ── Dependencies ─────────────────────────────────────────────────────────────
 
 def get_s3_client(settings: Settings):
-    return boto3.client(
-        "s3",
-        endpoint_url=f"{'https' if settings.minio_secure else 'http'}://{settings.minio_endpoint}",
-        aws_access_key_id=settings.minio_access_key,
-        aws_secret_access_key=settings.minio_secret_key,
-        config=Config(signature_version="s3v4"),
-        region_name="us-east-1",
-    )
+    # If MINIO_ENDPOINT is set → local MinIO (dev mode)
+    # If empty             → real AWS S3 (production, uses EC2 IAM role)
+    if settings.minio_endpoint:
+        return boto3.client(
+            "s3",
+            endpoint_url=f"{'https' if settings.minio_secure else 'http'}://{settings.minio_endpoint}",
+            aws_access_key_id=settings.minio_access_key,
+            aws_secret_access_key=settings.minio_secret_key,
+            config=Config(signature_version="s3v4"),
+            region_name="us-east-1",
+        )
+    # Production: no endpoint override — boto3 uses AWS default credential chain
+    return boto3.client("s3", region_name=os.environ.get("AWS_REGION", "us-east-1"))
 
 
 def get_rq_queue(settings: Settings) -> Queue:
