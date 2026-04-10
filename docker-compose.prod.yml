@@ -1,9 +1,9 @@
 # ── Production Docker Compose ──────────────────────────────────────────────────
 # Uses AWS RDS (Postgres) and AWS S3 instead of local containers.
-# Only Redis runs locally (not available in AWS free tier).
+# Builds all images from source on the EC2 server.
 
 services:
-  # ── Message Queue (local - no AWS free tier equivalent) ──────────────────
+  # ── Message Queue ────────────────────────────────────────────────────────
   redis:
     image: redis:7-alpine
     restart: always
@@ -15,7 +15,9 @@ services:
 
   # ── Upload Service ───────────────────────────────────────────────────────
   upload-service:
-    image: ghcr.io/elmoudenabdelghafor/resumescreener-upload-service:latest
+    build:
+      context: ./services/upload-service
+      dockerfile: Dockerfile
     restart: always
     ports:
       - "8001:8001"
@@ -26,7 +28,9 @@ services:
 
   # ── Parser Service ───────────────────────────────────────────────────────
   parser-service:
-    image: ghcr.io/elmoudenabdelghafor/resumescreener-parser-service:latest
+    build:
+      context: ./services/parser-service
+      dockerfile: Dockerfile
     restart: always
     ports:
       - "8002:8002"
@@ -37,7 +41,9 @@ services:
 
   # ── AI Screener Service ──────────────────────────────────────────────────
   ai-screener-service:
-    image: ghcr.io/elmoudenabdelghafor/resumescreener-ai-screener-service:latest
+    build:
+      context: ./services/ai-screener-service
+      dockerfile: Dockerfile
     restart: always
     ports:
       - "8003:8003"
@@ -48,7 +54,9 @@ services:
 
   # ── Dashboard (React SPA served by Nginx) ────────────────────────────────
   dashboard-service:
-    image: ghcr.io/elmoudenabdelghafor/resumescreener-dashboard-service:latest
+    build:
+      context: ./services/dashboard-service
+      dockerfile: Dockerfile
     restart: always
     ports:
       - "3000:80"
