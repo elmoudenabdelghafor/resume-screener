@@ -63,3 +63,18 @@ services:
     depends_on:
       - upload-service
       - ai-screener-service
+
+  # ── Grafana Alloy (Metrics Agent) ─────────────────────────────────────────
+  # Scrapes /metrics from all FastAPI services and pushes to Grafana Cloud.
+  # Uses ~25 MB RAM — safe to run on t3.micro free tier.
+  alloy:
+    image: grafana/alloy:latest
+    restart: always
+    volumes:
+      - ./monitoring/alloy.config:/etc/alloy/config.alloy:ro
+    command: run /etc/alloy/config.alloy
+    env_file: .env
+    depends_on:
+      - upload-service
+      - parser-service
+      - ai-screener-service
