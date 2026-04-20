@@ -49,6 +49,12 @@ resource "aws_iam_role_policy" "ec2_s3_policy" {
   })
 }
 
+# Allow SSM Session Manager (browser-based terminal, no SSH key needed)
+resource "aws_iam_role_policy_attachment" "ssm" {
+  role       = aws_iam_role.ec2_s3_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
 resource "aws_iam_instance_profile" "ec2_profile" {
   name = "${var.project_name}-instance-profile"
   role = aws_iam_role.ec2_s3_role.name
