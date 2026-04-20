@@ -28,3 +28,11 @@ coverage/
 tmp/
 *.log
 scaffold_*.py
+
+# Terraform
+.terraform/
+terraform.tfstate
+terraform.tfstate.backup
+terraform.tfvars
+*.tfvars
+!terraform.tfvars.example
